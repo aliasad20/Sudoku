@@ -1,4 +1,4 @@
-/*Sudoku 2.0
+/*Sudoku 2.1
 *Written and compiled on gcc 9.3.0, Ubuntu 20.04
 *May not run properly on windows platforms*/
 #include <stdio.h>
@@ -19,29 +19,36 @@ void help(void);
 void about(void);
 int main(void) {
 	short A[9][9];
-	int n;
+	char n;
+	struct termios orig, raw;
+	tcgetattr(STDIN_FILENO, &orig);
+	raw = orig;
+	raw.c_lflag &= ~(ECHO | ICANON);
+	tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
 	do {
 	mainmenu:
 		fflush(stdout);
 		system("clear");
 		printf("1: Game\n2: Solver\n3: Help\n4: About\n5: Exit\nEnter your input : ");
-		scanf(" %d", &n);
-		int q;
-		q=0;
+		fflush(stdout);
+		read(STDIN_FILENO, &n, 1);
+		char q;
+		q='0';
 		switch (n) {
-		case 1:
+		case '1':
 		newgame:
 			respuz(A, 0);
 			do{
 				fflush(stdout);
 				system("clear");
 				printf("1: Very Easy\n2: Easy\n3: Medium\n4: Hard\n5: Very Hard\n6: Main Menu\nEnter your input : ");
-				scanf(" %d", &q);
-			}while(q<1||q>6);
+				fflush(stdout);
+				read(STDIN_FILENO, &q, 1);
+			}while(q-'0'<1||q-'0'>6);
 			long tstart, ttaken;
 			int sec, min;
 			time(&tstart);
-			switch (q) {
+			switch (q-'0') {
 			case 1:
 				genpuz(A, 70);
 				break;
@@ -60,34 +67,36 @@ int main(void) {
 			case 6:
 				goto mainmenu;
 			}	
-			int opt;
+			char opt;
 			while (1) {
 				display(A);
 				if (edit(A,1)) {
 					do {
 						display(A);
 						printf("Menu\n1: Edit\n2: New Puzzle\n3: View Solution\n4: Main Menu\n5: Quit\nEnter your input : ");
-						scanf(" %d", &opt);
-					} while (!(opt > 0 && opt < 6));
-					if (opt == 3) {
+						fflush(stdout);
+						read(STDIN_FILENO, &opt, 1);
+					} while (!(opt -'0' > 0 && opt-'0' < 6));
+					if (opt-'0' == 3) {
 						respuz(A, 1);
 						solve(A, 0, 0);
 						char c;
 						do {
 							display(A);
 							printf("Enter q to quit : \n");
-							scanf(" %c", &c);
+							fflush(stdout);
+							read(STDIN_FILENO, &c, 1);
 						} while (c != 'q' && c != 'Q');
 						goto mainmenu;
 					}
-					else if (opt == 2) {
+					else if (opt-'0' == 2) {
 						goto newgame;
 					}
-					else if (opt == 4) {
+					else if (opt-'0' == 4) {
 						goto mainmenu;
 					}
-					else if (opt == 5) {
-						return 0;
+					else if (opt-'0' == 5) {
+						goto end;
 					}
 				}
 				else{
@@ -105,67 +114,54 @@ int main(void) {
 			fflush(stdout);
 			usleep(3000000);
 			break;
-		case 2:
+		case '2':
 			respuz(A, 0);
 			while(1){
 				display(A);
 				printf("1: Edit\n2: Solve\n3: Reset\n4: Main Menu\n5: Exit\nEnter your input : ");
-				scanf(" %d", &q);
-				if (q == 1) {
+				fflush(stdout);
+				read(STDIN_FILENO, &q, 1);
+				if (q -'0' == 1) {
+					respuz(A, 4);
 					display(A);
 					edit(A,0);
 				}
-				else if (q == 2) {
-					for (int i = 0;i < 9;i++) {
-						for (int j = 0;j < 9;j++) {
-							if (A[i][j] != 0) {
-								A[i][j] += 10;
-							}
-						}
-					}
+				else if (q-'0' == 2) {
+					respuz(A,3);
 					solve(A, 0, 0);
 					if (!chkwin(A)) {
 						respuz(A, 1);
-						for (int i = 0;i < 9;i++) {
-							for (int j = 0;j < 9;j++) {
-								if (A[i][j] > 10) {
-									A[i][j] -= 10;
-								}
-							}
-						}
+						respuz(A, 4);
 						display(A);
 						printf("No solution exists!");
 						fflush(stdout);
 						usleep(2000000);
 					}
 				}
-				else if (q == 3) {
+				else if (q-'0' == 3) {
 					respuz(A, 0);
 				}
-				else if (q == 4){
+				else if (q-'0' == 4){
 					goto mainmenu;
 				}
-				else if (q == 5) {
-					return 0;
+				else if (q-'0' == 5) {
+					goto end;
 				}
 			}
 			break;
-		case 3:
+		case '3':
 			help();
 			break;
-		case 4:
+		case '4':
 			about();
 			break;
 		}
-	} while (n != 5);
+	} while (n != '5');
+	end:
+	tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig);
 	return 0;
 }
 int edit(short A[9][9],int chk){
-	struct termios orig, raw;
-	tcgetattr(STDIN_FILENO, &orig);
-	raw = orig;
-	raw.c_lflag &= ~(ECHO | ICANON);
-	tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
 	int in,i,j;
 	fflush(stdout);
 	for(i=0;i<9;i++){
@@ -174,7 +170,7 @@ int edit(short A[9][9],int chk){
 			fflush(stdout);
 			in=getin();
 			if (in==-2){
-				tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig);
+				
 				return 1;
 			}
 			else if(in<10&&in!=-1&&A[i][j]<10){
@@ -319,28 +315,45 @@ void genpuz(short A[9][9], int d) {
 			}
 		}
 	} while (k!=1);
-	for (int i = 0;i < 9;i++) {
-		for (int j = 0;j < 9;j++) {
-			if(A[i][j]!=0){
-				A[i][j] += 10;
-			}
-		}
-	}
+	respuz(A,3);
 }
 void respuz(short A[9][9], int mode) {
+	int i,j;
+	//clear all
 	if (mode == 0) {
-		for (int i = 0;i < 9;i++) {
-			for (int j = 0;j < 9;j++) {
+		for (i = 0;i < 9;i++) {
+			for (j = 0;j < 9;j++) {
 				A[i][j] = 0;
 			}
 		}
 
 	}
-	else {
-		for (int i = 0;i < 9;i++) {
-			for (int j = 0;j < 9;j++) {
+	//clear userin
+	else if (mode == 1) {
+		for (i = 0;i < 9;i++) {
+			for (j = 0;j < 9;j++) {
 				if (A[i][j] < 10) {
 					A[i][j] = 0;
+				}
+			}
+		}
+	}
+	//make sysin
+	else if (mode == 3) {
+		for (i = 0;i < 9;i++) {
+			for (j = 0;j < 9;j++) {
+				if(A[i][j]!=0){
+					A[i][j] += 10;
+				}
+			}
+		}
+	}
+	//make userin
+	else if (mode == 4) {
+		for (int i = 0;i < 9;i++) {
+			for (int j = 0;j < 9;j++) {
+				if (A[i][j] > 10) {
+					A[i][j] -= 10;
 				}
 			}
 		}
@@ -449,7 +462,8 @@ void help(void) {
 		system("clear");
 		printf("I'm busy, I can't help right now");
 		printf("\nEnter q to quit help menu : ");
-		scanf(" %c", &c);
+		fflush(stdout);
+		read(STDIN_FILENO, &c, 1);
 	} while (c != 'q' && c != 'Q');
 }
 void about(void) {
@@ -457,11 +471,12 @@ void about(void) {
 	do {
 		fflush(stdout);
 		system("clear");
-		printf("Sudoku v2.0\n\nDeveloped on the behalf of computer science project of sem-I of batch 2020-2024,\nIndian Institute of Information Technology Kalyani\n\n");
+		printf("Sudoku v2.1\n\nDeveloped on the behalf of computer science project of sem-I of batch 2020-2024,\nIndian Institute of Information Technology Kalyani\n\n");
 		printf("Inspired by prof. Bhaskar Biswas\n\n");
 		//printf("Credits:\nAli Asad Quasim\nApurba Nath\nDevadi Yekaditya\nHritwik Ghosh\nMislah Rahman\nSoumalya Biswas\nSriramsetty Bhanu Teja\nSuryansh Sisodia\nVemana Joshua Immanuel\nYashraj Singh");
 		printf("\n\nEnter q to quit about menu : ");
-		scanf(" %c", &c);
+		fflush(stdout);
+		read(STDIN_FILENO, &c, 1);
 	} while (c != 'q' && c != 'Q');
 }
 void display(short A[9][9]) {
