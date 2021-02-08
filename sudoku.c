@@ -3,20 +3,18 @@
 #include <unistd.h>
 #include <time.h>
 void display(short [9][9]);
-void sysdisp(short [9][9]);
 void allinput(short [9][9]);
-void edtinput(short [9][9]);
+int edtinput(short [9][9]);
 short chkcomp(short [9][9]);
 int isallowed(short [9][9], int, int, int);
 void genpuz(short [9][9], int);
-void respuz(short [9][9], short [9][9]);
+void respuz(short [9][9], int);
 short chkwin(short [9][9]);
 int solve(short [9][9], int, int);
 void help(void);
 void about(void);
-int stpin;
 int main(void) {
-	short A[9][9], puz[9][9];
+	short A[9][9];
 	int n;
 	do {
 		mainmenu:
@@ -29,50 +27,43 @@ int main(void) {
 		case 1:
 			newgame:
 			respuz(A,0);
-			respuz(puz,0);
 			fflush(stdout);
 			system("clear");
 			printf("1: Very Easy\n2: Easy\n3: Medium\n4: Hard\n5: Very Hard\nEnter your input : ");
 			scanf(" %d", &q);
 			switch (q) {
 				case 1:
-					genpuz(puz, 70);
+					genpuz(A, 70);
 					break;
 				case 2:
-					genpuz(puz, 50);
+					genpuz(A, 50);
 					break;
 				case 3:
-					genpuz(puz, 30);
+					genpuz(A, 30);
 					break;
 				case 4:
-					genpuz(puz, 25);
+					genpuz(A, 25);
 					break;
 				case 5:
-					genpuz(puz, 17);
+					genpuz(A, 17);
 					break;
 			}
-			respuz(A, puz);
 			int opt;
 			while (!chkwin(A)) {
 				display(A);
-				sysdisp(puz);
 				printf("Enter 000 for menu\n");
-				edtinput(A);
-				if(stpin==1){
+				if(edtinput(A)){
 					do{
 						display(A);
-						sysdisp(puz);
 						printf("1: Cancel\n2: New Puzzle\n3: View Solution\n4: Main Menu\n5: Quit\nEnter your input : ");
 						scanf(" %d",&opt);
 					}while(!(opt>0&&opt<6));
 					if(opt==3){
-						respuz(A,0);
-						respuz(A, puz);
+						respuz(A,1);
 						solve(A, 0, 0);
 						char c;
 						do{
 							display(A);
-							sysdisp(puz);
 							printf("Enter q to quit : \n");
 							scanf(" %c", &c);
 						}while (c != 'q' && c != 'Q');
@@ -88,10 +79,8 @@ int main(void) {
 						return 0;
 					}
 				}
-				respuz(A, puz);
 			}
 			display(A);
-			sysdisp(puz);
 			printf("\nCongratulations! You win!");
 			fflush(stdout);
 			usleep(2000000);
@@ -110,18 +99,28 @@ int main(void) {
 					do {
 						display(A);
 						printf("Enter 000 to quit edit menu\n");
-						edtinput(A);
-					} while (stpin == 0);
+					} while (!edtinput(A));
 				}
 				else if (q == 3) {
-					respuz(puz,0);
-					respuz(puz,A);					
+					for(int i=0;i<9;i++){
+						for(int j=0;j<9;j++){
+							if(A[i][j]!=0){
+								A[i][j]+=10;
+							}
+						}
+					}			
 					solve(A, 0, 0);
 					if (!chkwin(A)){
-						respuz(A,0);
-						respuz(A,puz);
+						respuz(A,1);
+						for(int i=0;i<9;i++){
+							for(int j=0;j<9;j++){
+								if(A[i][j]>10){
+									A[i][j]-=10;
+								}
+							}
+						}			
 						display(A);
-       			 		printf("No solution exists");
+       			 		printf("No solution exists!");
        			 		fflush(stdout);
        			 		usleep(2000000);
        			 	}
@@ -166,49 +165,49 @@ void allinput(short A[9][9]) {
 		}
 	}
 }
-void edtinput(short A[9][9]) {
+int edtinput(short A[9][9]) {
 	char i, j;
 	int k;
-	stpin = 0;
 	printf("Enter the address and input : ");
-	scanf(" %c %c %d", &i, &j, &k);
+	scanf(" %c %c %d", &i, &j, &k);	
 	if (i - '0' == 0 && j - '0' == 0 && k == 0) {
-		stpin = 1;
-		return;
+		return 1;
+	}
+	if(A[i - 'a'][j - '1'] > 10){
+		return 0;
 	}
 	if (i - 'a' > 8 || i - 'a' < 0 || j - '1' > 8 || j - '1' < 0) {
-		return;
+		return 0;
 	}
 	if (k > 9 || k < 0) {
 		k = 0;
 	}
 	A[i - 'a'][j - '1'] = k;
+	return 0;
 }
 int isallowed(short A[9][9], int m, int  n, int k) {
-	for (int j = 0;j < 9;j++) {
-		if (A[m][j] == k) {
+	for (int i = 0;i < 9;i++) {
+		if (A[i][n] == k||A[i][n]-10 == k) {
 			return 0;
 		}
-	}
-	for (int i = 0;i < 9;i++) {
-		if (A[i][n] == k) {
+		if (A[m][i] == k||A[m][i]-10 == k) {
 			return 0;
 		}
 	}
 	for (int i = m - m % 3;i < m - m % 3 + 3;i++) {
 		for (int j = n - n % 3; j < n - n % 3 + 3;j++) {
-			if (A[i][j] == k) {
+			if (A[i][j] == k|| A[i][j]-10 == k) {
 				return 0;
 			}
 		}
 	}
 	return 1;
 }
-void genpuz(short puz[9][9], int d) {
+void genpuz(short A[9][9], int d) {
 	int k, q=0;
 	srand(time(0));
 	for(int j=0;j<9;j++){
-		if(puz[0][j]!=0){
+		if(A[0][j]!=0){
 			q=1;
 		}
 	}	
@@ -216,9 +215,9 @@ void genpuz(short puz[9][9], int d) {
 		int z;
 		k=(rand()%9);
 		z=(rand()%9)+1;
-		if(puz[0][k]==0){
-			if(isallowed(puz,0,k,z)){
-				puz[0][k]=z;
+		if(A[0][k]==0){
+			if(isallowed(A,0,k,z)){
+				A[0][k]=z;
 				q=1;
 			}
 		}
@@ -229,29 +228,36 @@ void genpuz(short puz[9][9], int d) {
 				int a = rand() % 9;
 				int b = rand() % 9;
 				int c = (rand() % 9) + 1;
-				if (puz[a][b] != 0) {
-					if (isallowed(puz, a, b, c)) {
-						puz[a][b] = c;
+				if (A[a][b] != 0) {
+					if (isallowed(A, a, b, c)) {
+						A[a][b] = c;
 						break;
 					}
 				}
 			}
 		}
-		k = solve(puz, 0, 0);
+		k = solve(A, 0, 0);
 		for (int i = 0;i < 81 - d;i++) {
 			int a = rand() % 9;
 			int b = rand() % 9;
-			if (puz[a][b] != 0) {
-				puz[a][b] = 0;
+			if (A[a][b] != 0) {
+				A[a][b] = 0;
 			}
 			else {
 				i--;
 			}
 		}
 	} while (k!=1);
+	for (int i = 0;i < 9;i++) {
+		for (int j = 0;j < 9;j++) {
+			if(A[i][j]!=0){
+				A[i][j] += 10;
+			}
+		}
+	}
 }
-void respuz(short A[9][9], short puz[9][9]) {
-	if (puz == 0){
+void respuz(short A[9][9], int mode) {
+	if (mode == 0){
 		for (int i = 0;i < 9;i++) {
 			for (int j = 0;j < 9;j++) {
 				A[i][j] = 0;
@@ -262,8 +268,8 @@ void respuz(short A[9][9], short puz[9][9]) {
 	else{
 		for (int i = 0;i < 9;i++) {
 			for (int j = 0;j < 9;j++) {
-				if (puz[i][j] != 0) {
-					A[i][j] = puz[i][j];
+				if (A[i][j] < 10) {
+					A[i][j] = 0;
 				}
 			}
 		}
@@ -303,10 +309,10 @@ short chkwin(short A[9][9]) {
 	for (i = 0;i < 9;i++) {
 		k = 1;
 		for (j = 0;j < 9;j++) {
-			if (j == 8 && A[i][j] != k) {
+			if (j == 8 && (A[i][j] != k && A[i][j] -10 != k)) {
 				return 0;
 			}
-			if (A[i][j] == k) {
+			if (A[i][j] == k|| A[i][j]-10 == k) {
 				k++;
 				if (k == 10) {
 					break;
@@ -318,10 +324,10 @@ short chkwin(short A[9][9]) {
 	for (j = 0;j < 9;j++) {
 		k = 1;
 		for (i = 0;i < 9;i++) {
-			if (i == 8 && A[i][j] != k) {
+			if (i == 8 && (A[i][j] != k && A[i][j] - 10 != k)) {
 				return 0;
 			}
-			if (A[i][j] == k) {
+			if (A[i][j] == k || A[i][j] - 10 == k) {
 				k++;
 				if (k == 10) {
 					break;
@@ -335,10 +341,10 @@ short chkwin(short A[9][9]) {
 			k = 1;
 			for (i = m - 3;i < m;i++) {
 				for (j = n - 3;j < n;j++) {
-					if (i == m - 1 && j == n - 1 && A[i][j] != k) {
+					if (i == m - 1 && j == n - 1 && (A[i][j] != k && A[i][j] - 10 != k)) {
 						return 0;
 					}
-					if (A[i][j] == k) {
+					if (A[i][j] == k || A[i][j] - 10 == k) {
 						k++;
 						if (k == 10) {
 							break;
@@ -365,7 +371,6 @@ short chkcomp(short A[9][9]) {
 	}
 	return 1;
 }
-//need update
 void help(void) {
 	char c;
 	do {
@@ -381,25 +386,12 @@ void about(void) {
 	do {
 		fflush(stdout);
 		system("clear");
-		printf("Sudoku v1.1\n");
-		printf("Credits: Mislah Rahman");
+		printf("Sudoku v1.2\n\nDeveloped on the behalf of computer science project of sem-I of batch 2020-2024,\nIndian Institute of Information Technology Kalyani\n\n");
+		printf("Inspired by prof. Bhaskar Biswas\n\n");
+		printf("Credits:\nAli Asad Quasim\nApurba Nath\nDevadi Yekaditya\nHritwik Ghosh\nMislah Rahman\nSoumalya Biswas\nSriramsetty Bhanu Teja\nSuryansh Sisodia\nVemana Joshua Immanuel\nYashraj Singh");
 		printf("\n\nEnter q to quit about menu : ");
 		scanf(" %c", &c);
 	} while (c != 'q' && c != 'Q');
-}
-void sysdisp(short A[9][9]) {
-	for(int i=0;i<9;i++){
-		for(int j=0;j<9;j++){
-			if(A[i][j]==0){
-				continue;
-			}
-			
-			char Bold[]={"𝟬"};
-			Bold[3]+=A[i][j];
-			printf("\e[%d;%df%s",3+2*i,5+4*j,Bold);
-		}
-	}
-	printf("\e[%d;%df",22,0);
 }
 void display(short A[9][9]) {
 	fflush(stdout);
@@ -410,7 +402,14 @@ void display(short A[9][9]) {
 			if(A[i][j]==0){
 				continue;
 			}
-			printf("\e[%d;%df%hu",3+2*i,5+4*j,A[i][j]);	
+			if(A[i][j]<10){
+				printf("\e[%d;%df%hu",3+2*i,5+4*j,A[i][j]);	
+			}
+			else{
+				char Bold[]={"𝟬"};
+				Bold[3]+=A[i][j]-10;
+				printf("\e[%d;%df%s",3+2*i,5+4*j,Bold);
+			}		
 		}
 	}
 	printf("\e[%d;%df",22,0);
