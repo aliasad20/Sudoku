@@ -1,4 +1,4 @@
-/*Sudoku 2.1
+/*Sudoku 2.2
 *Written and compiled on gcc 9.3.0, Ubuntu 20.04
 *May not run properly on windows platforms*/
 #include <stdio.h>
@@ -20,11 +20,12 @@ void about(void);
 int main(void) {
 	short A[9][9];
 	char n;
-	struct termios orig, raw;
-	tcgetattr(STDIN_FILENO, &orig);
-	raw = orig;
-	raw.c_lflag &= ~(ECHO | ICANON);
-	tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
+	//stores current terminal state
+	struct termios def, off;
+	tcgetattr(STDIN_FILENO, &def);
+	off = def;
+	off.c_lflag &= ~(ECHO | ICANON);
+	tcsetattr(STDIN_FILENO, TCSAFLUSH, &off);
 	do {
 	mainmenu:
 		fflush(stdout);
@@ -121,15 +122,15 @@ int main(void) {
 				printf("1: Edit\n2: Solve\n3: Reset\n4: Main Menu\n5: Exit\nEnter your input : ");
 				fflush(stdout);
 				read(STDIN_FILENO, &q, 1);
-				if (q -'0' == 1) {
+				switch(q - '0'){
+				case 1:
 					respuz(A, 4);
 					display(A);
 					edit(A,0);
-				}
-				else if (q-'0' == 2) {
+					break;
+				case 2:
 					respuz(A,3);
-					solve(A, 0, 0);
-					if (!chkwin(A)) {
+					if (!solve(A, 0, 0)) {
 						respuz(A, 1);
 						respuz(A, 4);
 						display(A);
@@ -137,14 +138,13 @@ int main(void) {
 						fflush(stdout);
 						usleep(2000000);
 					}
-				}
-				else if (q-'0' == 3) {
+					break;
+				case 3:
 					respuz(A, 0);
-				}
-				else if (q-'0' == 4){
+					break;
+				case 4:
 					goto mainmenu;
-				}
-				else if (q-'0' == 5) {
+				case 5:
 					goto end;
 				}
 			}
@@ -158,7 +158,8 @@ int main(void) {
 		}
 	} while (n != '5');
 	end:
-	tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig);
+	//restore terminal state
+	tcsetattr(STDIN_FILENO, TCSAFLUSH, &def);
 	return 0;
 }
 int edit(short A[9][9],int chk){
@@ -170,7 +171,6 @@ int edit(short A[9][9],int chk){
 			fflush(stdout);
 			in=getin();
 			if (in==-2){
-				
 				return 1;
 			}
 			else if(in<10&&in!=-1&&A[i][j]<10){
@@ -211,7 +211,7 @@ int edit(short A[9][9],int chk){
 				}				
 					
 			}
-			if(chkcomp(A)==1&&chk==1){
+			if(chk==1&&chkcomp(A)==1){
 				if(chkwin(A)){
 					return 0;
 				}
@@ -271,50 +271,42 @@ int isallowed(short A[9][9], int m, int  n, int k) {
 	return 1;
 }
 void genpuz(short A[9][9], int d) {
-	int k, q=0;
+	int r[9], z=0, tmp, i,j,k;
 	srand(time(0));
-	for(int j=0;j<9;j++){
-		if(A[0][j]!=0){
-			q=1;
+	for(i=0;i<9;i++){
+		r[i]=i+1;	
+	}
+	//generate diagonal elements
+	//diagonal elements are independant
+	do{
+		for(i=9;i>0;i--){
+			k=rand()%i;
+			tmp=r[i-1];
+			r[i-1]=r[k];
+			r[k]=tmp;
 		}
-	}	
-	while(!q){
-		int z;
-		k=(rand()%9);
-		z=(rand()%9)+1;
-		if(A[0][k]==0){
-			if(isallowed(A,0,k,z)){
-				A[0][k]=z;
-				q=1;
+		k=0;
+		for(i=z; i<3+z;i++){
+			for(j=z;j<3+z;j++){
+				A[i][j]=r[k];
+				k++;
 			}
+		}
+		z+=3;
+	}while(z!=9);
+	solve(A, 0, 0);
+	//remove cells
+	for (int i = 0;i < 81 - d;i++) {
+		int a = rand() % 9;
+		int b = rand() % 9;
+		if (A[a][b] != 0) {
+			A[a][b] = 0;
+		}
+		else {
+			i--;
 		}
 	}
-	do {
-		for (int i = 0;i < 4;i++) {
-			while (1) {
-				int a = rand() % 9;
-				int b = rand() % 9;
-				int c = (rand() % 9) + 1;
-				if (A[a][b] != 0) {
-					if (isallowed(A, a, b, c)) {
-						A[a][b] = c;
-						break;
-					}
-				}
-			}
-		}
-		k = solve(A, 0, 0);
-		for (int i = 0;i < 81 - d;i++) {
-			int a = rand() % 9;
-			int b = rand() % 9;
-			if (A[a][b] != 0) {
-				A[a][b] = 0;
-			}
-			else {
-				i--;
-			}
-		}
-	} while (k!=1);
+	//make sysinp
 	respuz(A,3);
 }
 void respuz(short A[9][9], int mode) {
@@ -380,7 +372,6 @@ int solve(short A[9][9], int m, int n) {
 				return 1;
 			}
 		}
-
 		A[m][n] = 0;
 	}
 	return 0;
@@ -471,7 +462,7 @@ void about(void) {
 	do {
 		fflush(stdout);
 		system("clear");
-		printf("Sudoku v2.1\n\nDeveloped on the behalf of computer science project of sem-I of batch 2020-2024,\nIndian Institute of Information Technology Kalyani\n\n");
+		printf("Sudoku v2.2\n\nDeveloped on the behalf of computer science project of sem-I of batch 2020-2024,\nIndian Institute of Information Technology Kalyani\n\n");
 		printf("Inspired by prof. Bhaskar Biswas\n\n");
 		//printf("Credits:\nAli Asad Quasim\nApurba Nath\nDevadi Yekaditya\nHritwik Ghosh\nMislah Rahman\nSoumalya Biswas\nSriramsetty Bhanu Teja\nSuryansh Sisodia\nVemana Joshua Immanuel\nYashraj Singh");
 		printf("\n\nEnter q to quit about menu : ");
