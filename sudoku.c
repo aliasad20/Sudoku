@@ -1,4 +1,4 @@
-/*Sudoku 2.3
+/*Sudoku 2.4
 *Written and compiled on gcc 9.3.0, Ubuntu 20.04
 *May not run properly on windows platforms*/
 #include <stdio.h>
@@ -48,7 +48,6 @@ int main(void) {
 				read(STDIN_FILENO, &q, 1);
 			}while(q-'0'<1||q-'0'>4&&q != 'q'&&q != 'Q');
 			long tstart, ttaken;
-			int sec, min;
 			time(&tstart);
 			switch (q-'0') {
 			case 1:
@@ -74,29 +73,33 @@ int main(void) {
 				if (edit(A,1)) {
 					do {
 						display(A);
-						printf("Menu\n1: Edit\n2: New Puzzle\n3: View Solution\n4: Main Menu\n5: Quit\nEnter your input : ");
+						time(&ttaken);
+						ttaken -= tstart;
+						printf("\e[8;44fTime taken: %ld mins %ld sec\e[9;44f1: Edit\e[10;44f2: Clear Input\e[11;44f3: View Solution\e[12;44f4: New Puzzle\e[13;44f5: Main Menu\e[14;44f6: Quit\e[16;44fEnter your input : ", ttaken/60, ttaken%60);
 						fflush(stdout);
 						read(STDIN_FILENO, &opt, 1);
-					} while (!(opt -'0' > 0 && opt-'0' < 6));
-					if (opt-'0' == 3) {
+					} while (!(opt -'0' > 0 && opt-'0' < 7));
+					if (opt-'0' == 2){
+						respuz(A,1);
+					}
+					else if (opt-'0' == 3) {
 						respuz(A, 1);
 						solve(A, 0, 0);
 						char c;
 						do {
 							display(A);
-							printf("Enter q to quit : \n");
 							fflush(stdout);
 							read(STDIN_FILENO, &c, 1);
 						} while (c != 'q' && c != 'Q');
 						goto mainmenu;
 					}
-					else if (opt-'0' == 2) {
+					else if (opt-'0' == 4) {
 						goto newgame;
 					}
-					else if (opt-'0' == 4) {
+					else if (opt-'0' == 5) {
 						goto mainmenu;
 					}
-					else if (opt-'0' == 5) {
+					else if (opt-'0' == 6) {
 						goto end;
 					}
 				}
@@ -106,12 +109,9 @@ int main(void) {
 			}
 			time(&ttaken);
 			ttaken -= tstart;
-			sec = ttaken % 60;
-			ttaken /= 60;
-			min = ttaken % 60;
 			display(A);
-			printf("\nCongratulations! You win!");
-			printf("\nTime taken: %ld hours %d mins %d sec", ttaken / 60, min, sec);
+			printf("\e[11;44fCongratulations! You win!");
+			printf("\e[12;44fTime taken: %ld mins %ld sec", ttaken/60, ttaken%60);
 			fflush(stdout);
 			usleep(3000000);
 			break;
@@ -119,7 +119,7 @@ int main(void) {
 			respuz(A, 0);
 			while(1){
 				display(A);
-				printf("1: Edit\n2: Solve\n3: Reset\n4: Main Menu\n5: Exit\nEnter your input : ");
+				printf("\e[8;44f1: Edit\e[9;44f2: Solve\e[10;44f3: Reset\e[11;44f4: Main Menu\e[12;44f5: Exit\e[14;44fEnter your input : ");
 				fflush(stdout);
 				read(STDIN_FILENO, &q, 1);
 				switch(q - '0'){
@@ -134,7 +134,7 @@ int main(void) {
 						respuz(A, 1);
 						respuz(A, 4);
 						display(A);
-						printf("No solution exists!");
+						printf("\e[11;44fNo solution exists!");
 						fflush(stdout);
 						usleep(2000000);
 					}
@@ -158,6 +158,8 @@ int main(void) {
 		}
 	} while (n != '5');
 	end:
+	fflush(stdout);
+	system("clear");
 	//restore terminal state
 	tcsetattr(STDIN_FILENO, TCSAFLUSH, &def);
 	return 0;
@@ -470,8 +472,8 @@ void help(void) {
 	do {
 		fflush(stdout);
 		system("clear");
-		printf("I'm busy, I can't help right now");
-		printf("\nEnter q to quit help menu : ");
+		printf("I'm busy, I can't help right now,\nbut remember, q will save you! try typing q\n");
+		//printf("\nEnter q to quit help menu : ");
 		fflush(stdout);
 		read(STDIN_FILENO, &c, 1);
 	} while (c != 'q' && c != 'Q');
@@ -481,7 +483,7 @@ void about(void) {
 	do {
 		fflush(stdout);
 		system("clear");
-		printf("Sudoku v2.3\n\nDeveloped on the behalf of computer science project of sem-I of batch 2020-2024,\nIndian Institute of Information Technology Kalyani\n\n");
+		printf("Sudoku v2.4\n\nDeveloped on the behalf of computer science project of sem-I of batch 2020-2024,\nIndian Institute of Information Technology Kalyani\n\n");
 		printf("Inspired by prof. Bhaskar Biswas\n\n");
 		printf("Credits:\nAli Asad Quasim\nApurba Nath\nDevadi Yekaditya\nHritwik Ghosh\nMislah Rahman\nSoumalya Biswas\nSriramsetty Bhanu Teja\nSuryansh Sisodia\nVemana Joshua Immanuel\nYashraj Singh");
 		printf("\n\nEnter q to quit about menu : ");
@@ -508,5 +510,5 @@ void display(short A[9][9]) {
 			}
 		}
 	}
-	printf("\e[%d;%df", 22, 0);
+	printf("\e[22;0f");
 }
