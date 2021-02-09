@@ -1,4 +1,4 @@
-/*Sudoku 2.4
+/*Sudoku 2.5
 *Written and compiled on gcc 9.3.0, Ubuntu 20.04
 *May not run properly on windows platforms*/
 #include <stdio.h>
@@ -27,11 +27,12 @@ int main(void) {
 	off = def;
 	off.c_lflag &= ~(ECHO | ICANON);
 	tcsetattr(STDIN_FILENO, TCSAFLUSH, &off);
+	printf("\x1b[?25l");//hide curser
 	do {
 	mainmenu:
 		fflush(stdout);
 		system("clear");
-		printf("1: Game\n2: Solver\n3: Help\n4: About\n5: Exit\nEnter your input : ");
+		printf("1: Game\n2: Solver\n3: Help\n4: About\n5: Exit");
 		fflush(stdout);
 		read(STDIN_FILENO, &n, 1);
 		char q;
@@ -43,7 +44,7 @@ int main(void) {
 			do{
 				fflush(stdout);
 				system("clear");
-				printf("1: Easy\n2: Medium\n3: Hard\n4: Very Hard\nEnter your input : ");
+				printf("1: Easy\n2: Medium\n3: Hard\n4: Very Hard");
 				fflush(stdout);
 				read(STDIN_FILENO, &q, 1);
 			}while(q-'0'<1||q-'0'>4&&q != 'q'&&q != 'Q');
@@ -75,7 +76,7 @@ int main(void) {
 						display(A);
 						time(&ttaken);
 						ttaken -= tstart;
-						printf("\e[8;44fTime taken: %ld mins %ld sec\e[9;44f1: Edit\e[10;44f2: Clear Input\e[11;44f3: View Solution\e[12;44f4: New Puzzle\e[13;44f5: Main Menu\e[14;44f6: Quit\e[16;44fEnter your input : ", ttaken/60, ttaken%60);
+						printf("\e[8;44fTime taken: %ld mins %ld sec\e[9;44f1: Edit\e[10;44f2: Clear Input\e[11;44f3: View Solution\e[12;44f4: New Puzzle\e[13;44f5: Main Menu\e[14;44f6: Quit", ttaken/60, ttaken%60);
 						fflush(stdout);
 						read(STDIN_FILENO, &opt, 1);
 					} while (!(opt -'0' > 0 && opt-'0' < 7));
@@ -119,7 +120,7 @@ int main(void) {
 			respuz(A, 0);
 			while(1){
 				display(A);
-				printf("\e[8;44f1: Edit\e[9;44f2: Solve\e[10;44f3: Reset\e[11;44f4: Main Menu\e[12;44f5: Exit\e[14;44fEnter your input : ");
+				printf("\e[8;44f1: Edit\e[9;44f2: Solve\e[10;44f3: Reset\e[11;44f4: Main Menu\e[12;44f5: Exit");
 				fflush(stdout);
 				read(STDIN_FILENO, &q, 1);
 				switch(q - '0'){
@@ -158,13 +159,15 @@ int main(void) {
 		}
 	} while (n != '5');
 	end:
+	//restore initial states
+	printf("\x1b[?25h");
 	fflush(stdout);
 	system("clear");
-	//restore terminal state
 	tcsetattr(STDIN_FILENO, TCSAFLUSH, &def);
 	return 0;
 }
 int edit(short A[9][9],int chk){
+	printf("\x1b[?25h");//show curser
 	int in,i,j;
 	fflush(stdout);
 	for(i=0;i<9;i++){
@@ -173,6 +176,7 @@ int edit(short A[9][9],int chk){
 			fflush(stdout);
 			in=getin();
 			if (in==-2){
+				printf("\x1b[?25l");
 				return 1;
 			}
 			else if(in<10&&in!=-1&&A[i][j]<10){
@@ -215,6 +219,7 @@ int edit(short A[9][9],int chk){
 			}
 			if(chk==1&&chkcomp(A)==1){
 				if(chkwin(A)){
+					printf("\x1b[?25l");
 					return 0;
 				}
 			}	
@@ -473,7 +478,6 @@ void help(void) {
 		fflush(stdout);
 		system("clear");
 		printf("I'm busy, I can't help right now,\nbut remember, q will save you! try typing q\n");
-		//printf("\nEnter q to quit help menu : ");
 		fflush(stdout);
 		read(STDIN_FILENO, &c, 1);
 	} while (c != 'q' && c != 'Q');
@@ -483,10 +487,9 @@ void about(void) {
 	do {
 		fflush(stdout);
 		system("clear");
-		printf("Sudoku v2.4\n\nDeveloped on the behalf of computer science project of sem-I of batch 2020-2024,\nIndian Institute of Information Technology Kalyani\n\n");
+		printf("Sudoku v2.5\n\nDeveloped on the behalf of computer science project of sem-I of batch 2020-2024,\nIndian Institute of Information Technology Kalyani\n\n");
 		printf("Inspired by prof. Bhaskar Biswas\n\n");
 		printf("Credits:\nAli Asad Quasim\nApurba Nath\nDevadi Yekaditya\nHritwik Ghosh\nMislah Rahman\nSoumalya Biswas\nSriramsetty Bhanu Teja\nSuryansh Sisodia\nVemana Joshua Immanuel\nYashraj Singh");
-		printf("\n\nEnter q to quit about menu : ");
 		fflush(stdout);
 		read(STDIN_FILENO, &c, 1);
 	} while (c != 'q' && c != 'Q');
