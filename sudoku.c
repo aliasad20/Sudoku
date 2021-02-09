@@ -1,4 +1,4 @@
-/*Sudoku 2.2
+/*Sudoku 2.3
 *Written and compiled on gcc 9.3.0, Ubuntu 20.04
 *May not run properly on windows platforms*/
 #include <stdio.h>
@@ -12,6 +12,7 @@ int isallowed(short[9][9], int, int, int);
 void genpuz(short[9][9], int);
 void respuz(short[9][9], int);
 short chkwin(short[9][9]);
+int chksolvable(short[9][9]);
 int solve(short[9][9], int, int);
 int getin();
 int edit(short[9][9],int);
@@ -35,37 +36,36 @@ int main(void) {
 		read(STDIN_FILENO, &n, 1);
 		char q;
 		q='0';
-		switch (n) {
-		case '1':
+		switch (n-'0') {
+		case 1:
 		newgame:
 			respuz(A, 0);
 			do{
 				fflush(stdout);
 				system("clear");
-				printf("1: Very Easy\n2: Easy\n3: Medium\n4: Hard\n5: Very Hard\n6: Main Menu\nEnter your input : ");
+				printf("1: Easy\n2: Medium\n3: Hard\n4: Very Hard\nEnter your input : ");
 				fflush(stdout);
 				read(STDIN_FILENO, &q, 1);
-			}while(q-'0'<1||q-'0'>6);
+			}while(q-'0'<1||q-'0'>4&&q != 'q'&&q != 'Q');
 			long tstart, ttaken;
 			int sec, min;
 			time(&tstart);
 			switch (q-'0') {
 			case 1:
-				genpuz(A, 70);
+				genpuz(A, 60);
 				break;
 			case 2:
-				genpuz(A, 50);
+				genpuz(A, 45);
 				break;
 			case 3:
 				genpuz(A, 30);
 				break;
 			case 4:
-				genpuz(A, 25);
+				genpuz(A, 22);
 				break;
-			case 5:
-				genpuz(A, 17);
-				break;
-			case 6:
+			case 'q' -'0':
+				goto mainmenu;
+			case 'Q' -'0':
 				goto mainmenu;
 			}	
 			char opt;
@@ -115,7 +115,7 @@ int main(void) {
 			fflush(stdout);
 			usleep(3000000);
 			break;
-		case '2':
+		case 2:
 			respuz(A, 0);
 			while(1){
 				display(A);
@@ -130,7 +130,7 @@ int main(void) {
 					break;
 				case 2:
 					respuz(A,3);
-					if (!solve(A, 0, 0)) {
+					if (!chksolvable(A)||!solve(A, 0, 0)) {
 						respuz(A, 1);
 						respuz(A, 4);
 						display(A);
@@ -149,10 +149,10 @@ int main(void) {
 				}
 			}
 			break;
-		case '3':
+		case 3:
 			help();
 			break;
-		case '4':
+		case 4:
 			about();
 			break;
 		}
@@ -243,7 +243,7 @@ int getin() {
 				}
 			}
 		}
-		else if(c=='q'){
+		else if(c=='q'||c=='Q'){
 			return -2; //-2 when q presssed
 		}
 		else if(c-'0' >= 0 && c-'0' <=9 ){ //numbers 0 to 8
@@ -350,6 +350,25 @@ void respuz(short A[9][9], int mode) {
 			}
 		}
 	}
+}
+int chksolvable(short A[9][9]){
+	int a;
+	for (int i = 0;i < 9;i++) {
+		for (int j = 0;j < 9;j++) {
+			if(A[i][j]!=0){
+				a=A[i][j];
+				A[i][j]=0;
+				if(!isallowed(A,i,j,a)){
+					A[i][j]=a;
+					return 0;
+				}
+				else{
+					A[i][j]=a;
+				}
+			}
+		}
+	}
+	return 1;
 }
 int solve(short A[9][9], int m, int n) {
 	if (m == 8 && n == 9) {
@@ -462,9 +481,9 @@ void about(void) {
 	do {
 		fflush(stdout);
 		system("clear");
-		printf("Sudoku v2.2\n\nDeveloped on the behalf of computer science project of sem-I of batch 2020-2024,\nIndian Institute of Information Technology Kalyani\n\n");
+		printf("Sudoku v2.3\n\nDeveloped on the behalf of computer science project of sem-I of batch 2020-2024,\nIndian Institute of Information Technology Kalyani\n\n");
 		printf("Inspired by prof. Bhaskar Biswas\n\n");
-		//printf("Credits:\nAli Asad Quasim\nApurba Nath\nDevadi Yekaditya\nHritwik Ghosh\nMislah Rahman\nSoumalya Biswas\nSriramsetty Bhanu Teja\nSuryansh Sisodia\nVemana Joshua Immanuel\nYashraj Singh");
+		printf("Credits:\nAli Asad Quasim\nApurba Nath\nDevadi Yekaditya\nHritwik Ghosh\nMislah Rahman\nSoumalya Biswas\nSriramsetty Bhanu Teja\nSuryansh Sisodia\nVemana Joshua Immanuel\nYashraj Singh");
 		printf("\n\nEnter q to quit about menu : ");
 		fflush(stdout);
 		read(STDIN_FILENO, &c, 1);
