@@ -1,4 +1,4 @@
-/*Sudoku 2.5
+/*Sudoku 2.6
 *Written and compiled on gcc 9.3.0, Ubuntu 20.04
 *May not run properly on windows platforms*/
 #include <stdio.h>
@@ -6,22 +6,20 @@
 #include <unistd.h>
 #include <time.h>
 #include <termios.h>
-void display(short[9][9]);
 short chkcomp(short[9][9]);
-int isallowed(short[9][9], int, int, int);
+void display(short[9][9]);
 void genpuz(short[9][9], int);
 void respuz(short[9][9], int);
-short chkwin(short[9][9]);
 int chksolvable(short[9][9]);
+int isallowed(short[9][9], int, int, int);
 int solve(short[9][9], int, int);
-int getin();
 int edit(short[9][9],int);
+int getin(void);
 void help(void);
 void about(void);
 int main(void) {
 	short A[9][9];
 	char n;
-	//stores current terminal state
 	struct termios def, off;
 	tcgetattr(STDIN_FILENO, &def);
 	off = def;
@@ -52,7 +50,7 @@ int main(void) {
 			time(&tstart);
 			switch (q-'0') {
 			case 1:
-				genpuz(A, 60);
+				genpuz(A, 70);
 				break;
 			case 2:
 				genpuz(A, 45);
@@ -80,10 +78,11 @@ int main(void) {
 						fflush(stdout);
 						read(STDIN_FILENO, &opt, 1);
 					} while (!(opt -'0' > 0 && opt-'0' < 7));
-					if (opt-'0' == 2){
+					switch(opt-'0'){
+					case 2:
 						respuz(A,1);
-					}
-					else if (opt-'0' == 3) {
+						break;
+					case 3:
 						respuz(A, 1);
 						solve(A, 0, 0);
 						char c;
@@ -93,14 +92,11 @@ int main(void) {
 							read(STDIN_FILENO, &c, 1);
 						} while (c != 'q' && c != 'Q');
 						goto mainmenu;
-					}
-					else if (opt-'0' == 4) {
+					case 4:
 						goto newgame;
-					}
-					else if (opt-'0' == 5) {
+					case 5:
 						goto mainmenu;
-					}
-					else if (opt-'0' == 6) {
+					case 6:
 						goto end;
 					}
 				}
@@ -125,15 +121,15 @@ int main(void) {
 				read(STDIN_FILENO, &q, 1);
 				switch(q - '0'){
 				case 1:
-					respuz(A, 4);
+					respuz(A, 3);
 					display(A);
 					edit(A,0);
 					break;
 				case 2:
-					respuz(A,3);
+					respuz(A,2);
 					if (!chksolvable(A)||!solve(A, 0, 0)) {
 						respuz(A, 1);
-						respuz(A, 4);
+						respuz(A, 3);
 						display(A);
 						printf("\e[11;44fNo solution exists!");
 						fflush(stdout);
@@ -159,7 +155,6 @@ int main(void) {
 		}
 	} while (n != '5');
 	end:
-	//restore initial states
 	printf("\x1b[?25h");
 	fflush(stdout);
 	system("clear");
@@ -218,7 +213,7 @@ int edit(short A[9][9],int chk){
 					
 			}
 			if(chk==1&&chkcomp(A)==1){
-				if(chkwin(A)){
+				if(chksolvable(A)){
 					printf("\x1b[?25l");
 					return 0;
 				}
@@ -251,9 +246,9 @@ int getin() {
 			}
 		}
 		else if(c=='q'||c=='Q'){
-			return -2; //-2 when q presssed
+			return -2;
 		}
-		else if(c-'0' >= 0 && c-'0' <=9 ){ //numbers 0 to 8
+		else if(c-'0' >= 0 && c-'0' <=9 ){ 
 			return c-'0';
 		}
 	}
@@ -283,8 +278,6 @@ void genpuz(short A[9][9], int d) {
 	for(i=0;i<9;i++){
 		r[i]=i+1;	
 	}
-	//generate diagonal elements
-	//diagonal elements are independant
 	do{
 		for(i=9;i>0;i--){
 			k=rand()%i;
@@ -302,7 +295,6 @@ void genpuz(short A[9][9], int d) {
 		z+=3;
 	}while(z!=9);
 	solve(A, 0, 0);
-	//remove cells
 	for (int i = 0;i < 81 - d;i++) {
 		int a = rand() % 9;
 		int b = rand() % 9;
@@ -313,22 +305,19 @@ void genpuz(short A[9][9], int d) {
 			i--;
 		}
 	}
-	//make sysinp
-	respuz(A,3);
+	respuz(A,2);
 }
 void respuz(short A[9][9], int mode) {
 	int i,j;
-	//clear all
-	if (mode == 0) {
+	switch(mode){
+	case 0://clear
 		for (i = 0;i < 9;i++) {
 			for (j = 0;j < 9;j++) {
 				A[i][j] = 0;
 			}
 		}
-
-	}
-	//clear userin
-	else if (mode == 1) {
+		break;
+	case 1://clearusrinput
 		for (i = 0;i < 9;i++) {
 			for (j = 0;j < 9;j++) {
 				if (A[i][j] < 10) {
@@ -336,9 +325,8 @@ void respuz(short A[9][9], int mode) {
 				}
 			}
 		}
-	}
-	//make sysin
-	else if (mode == 3) {
+		break;
+	case 2://upgradesys
 		for (i = 0;i < 9;i++) {
 			for (j = 0;j < 9;j++) {
 				if(A[i][j]!=0){
@@ -346,9 +334,8 @@ void respuz(short A[9][9], int mode) {
 				}
 			}
 		}
-	}
-	//make userin
-	else if (mode == 4) {
+		break;
+	case 3://downgradesys
 		for (int i = 0;i < 9;i++) {
 			for (int j = 0;j < 9;j++) {
 				if (A[i][j] > 10) {
@@ -356,6 +343,7 @@ void respuz(short A[9][9], int mode) {
 				}
 			}
 		}
+		break;
 	}
 }
 int chksolvable(short A[9][9]){
@@ -377,90 +365,30 @@ int chksolvable(short A[9][9]){
 	}
 	return 1;
 }
-int solve(short A[9][9], int m, int n) {
-	if (m == 8 && n == 9) {
+int solve(short A[9][9], int i, int j) {
+	if (i == 8 && j == 9) {
 		return 1;
 	}
-	if (n == 9)
+	if (j == 9)
 	{
-		m++;
-		n = 0;
+		i++;
+		j = 0;
 	}
-	if (A[m][n] > 0) {
-		return solve(A, m, n + 1);
+	if (A[i][j] > 0) {
+		return solve(A, i, j + 1);
 	}
-	for (int num = 1; num <= 9; num++)
+	for (int n = 1; n <= 9; n++)
 	{
-		if (isallowed(A, m, n, num) == 1)
+		if (isallowed(A, i, j, n) == 1)
 		{
-			A[m][n] = num;
-			if (solve(A, m, n + 1) == 1) {
+			A[i][j] = n;
+			if (solve(A, i, j + 1) == 1) {
 				return 1;
 			}
 		}
-		A[m][n] = 0;
+		A[i][j] = 0;
 	}
 	return 0;
-}
-short chkwin(short A[9][9]) {
-	int i, j, k, m, n;
-	if (!chkcomp(A)) {
-		return 0;
-	}
-	for (i = 0;i < 9;i++) {
-		k = 1;
-		for (j = 0;j < 9;j++) {
-			if (j == 8 && (A[i][j] != k && A[i][j] - 10 != k)) {
-				return 0;
-			}
-			if (A[i][j] == k || A[i][j] - 10 == k) {
-				k++;
-				if (k == 10) {
-					break;
-				}
-				j = -1;
-			}
-		}
-	}
-	for (j = 0;j < 9;j++) {
-		k = 1;
-		for (i = 0;i < 9;i++) {
-			if (i == 8 && (A[i][j] != k && A[i][j] - 10 != k)) {
-				return 0;
-			}
-			if (A[i][j] == k || A[i][j] - 10 == k) {
-				k++;
-				if (k == 10) {
-					break;
-				}
-				i = -1;
-			}
-		}
-	}
-	for (m = 3;m < 10;m = m + 3) {
-		for (n = 3;n < 10;n = n + 3) {
-			k = 1;
-			for (i = m - 3;i < m;i++) {
-				for (j = n - 3;j < n;j++) {
-					if (i == m - 1 && j == n - 1 && (A[i][j] != k && A[i][j] - 10 != k)) {
-						return 0;
-					}
-					if (A[i][j] == k || A[i][j] - 10 == k) {
-						k++;
-						if (k == 10) {
-							break;
-						}
-						i = m - 3;
-						j = n - 4;
-					}
-				}
-				if (k == 10) {
-					break;
-				}
-			}
-		}
-	}
-	return 1;
 }
 short chkcomp(short A[9][9]) {
 	for (int i = 0;i < 9;i++) {
@@ -487,7 +415,7 @@ void about(void) {
 	do {
 		fflush(stdout);
 		system("clear");
-		printf("Sudoku v2.5\n\nDeveloped on the behalf of computer science project of sem-I of batch 2020-2024,\nIndian Institute of Information Technology Kalyani\n\n");
+		printf("Sudoku v2.6\n\nDeveloped on the behalf of computer science project of sem-I of batch 2020-2024,\nIndian Institute of Information Technology Kalyani\n\n");
 		printf("Inspired by prof. Bhaskar Biswas\n\n");
 		printf("Credits:\nAli Asad Quasim\nApurba Nath\nDevadi Yekaditya\nHritwik Ghosh\nMislah Rahman\nSoumalya Biswas\nSriramsetty Bhanu Teja\nSuryansh Sisodia\nVemana Joshua Immanuel\nYashraj Singh");
 		fflush(stdout);
