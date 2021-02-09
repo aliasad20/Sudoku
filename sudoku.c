@@ -1,4 +1,4 @@
-/*Sudoku 2.4
+/*Sudoku 2.3
 *Written and compiled on gcc 9.3.0, Ubuntu 20.04
 *May not run properly on windows platforms*/
 #include <stdio.h>
