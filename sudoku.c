@@ -1,4 +1,4 @@
-/*Sudoku 2.6
+/*Sudoku 2.7
 *Written and compiled on gcc 9.3.0, Ubuntu 20.04
 *May not run properly on windows platforms*/
 #include <stdio.h>
@@ -6,49 +6,47 @@
 #include <unistd.h>
 #include <time.h>
 #include <termios.h>
-short chkcomp(short[9][9]);
 void display(short[9][9]);
 void genpuz(short[9][9], int);
 void respuz(short[9][9], int);
+short chkcomp(short[9][9]);
 int chksolvable(short[9][9]);
 int isallowed(short[9][9], int, int, int);
 int solve(short[9][9], int, int);
-int edit(short[9][9],int);
+int edit(short[9][9],int,int*,int*);
 int getin(void);
 void help(void);
 void about(void);
 int main(void) {
 	short A[9][9];
-	char n;
+	int n;
 	struct termios def, off;
 	tcgetattr(STDIN_FILENO, &def);
 	off = def;
 	off.c_lflag &= ~(ECHO | ICANON);
 	tcsetattr(STDIN_FILENO, TCSAFLUSH, &off);
-	printf("\x1b[?25l");//hide curser
+	printf("\e[?25l");//hide curser
 	do {
 	mainmenu:
 		fflush(stdout);
 		system("clear");
 		printf("1: Game\n2: Solver\n3: Help\n4: About\n5: Exit");
-		fflush(stdout);
-		read(STDIN_FILENO, &n, 1);
-		char q;
-		q='0';
-		switch (n-'0') {
+		n = getin();
+		int q, opt;
+		int x=0,y=0;
+		switch (n) {
 		case 1:
 		newgame:
 			respuz(A, 0);
 			do{
 				fflush(stdout);
 				system("clear");
-				printf("1: Easy\n2: Medium\n3: Hard\n4: Very Hard");
-				fflush(stdout);
-				read(STDIN_FILENO, &q, 1);
-			}while(q-'0'<1||q-'0'>4&&q != 'q'&&q != 'Q');
+				printf("1: Easy\n2: Medium\n3: Hard\n4: Extreme");
+				q = getin();
+			}while(!(q>=1||q<=4||q==-2));
 			long tstart, ttaken;
 			time(&tstart);
-			switch (q-'0') {
+			switch (q) {
 			case 1:
 				genpuz(A, 70);
 				break;
@@ -61,42 +59,36 @@ int main(void) {
 			case 4:
 				genpuz(A, 22);
 				break;
-			case 'q' -'0':
-				goto mainmenu;
-			case 'Q' -'0':
+			case -2:
 				goto mainmenu;
 			}	
-			char opt;
 			while (1) {
 				display(A);
-				if (edit(A,1)) {
-					do {
-						display(A);
-						time(&ttaken);
-						ttaken -= tstart;
-						printf("\e[8;44fTime taken: %ld mins %ld sec\e[9;44f1: Edit\e[10;44f2: Clear Input\e[11;44f3: View Solution\e[12;44f4: New Puzzle\e[13;44f5: Main Menu\e[14;44f6: Quit", ttaken/60, ttaken%60);
-						fflush(stdout);
-						read(STDIN_FILENO, &opt, 1);
-					} while (!(opt -'0' > 0 && opt-'0' < 7));
-					switch(opt-'0'){
-					case 2:
+				if (edit(A,1,&x,&y)) {
+					display(A);
+					time(&ttaken);
+					ttaken -= tstart;
+					printf("\e[8;44fTime taken: %ld mins %ld sec", ttaken/60, ttaken%60);
+					printf("\e[9;44f1: Clear Input\e[10;44f2: View Solution\e[11;44f3: New Puzzle\e[12;44f4: Main Menu\e[13;44f5: Quit");
+					opt = getin();
+					switch(opt){
+					case 1:
 						respuz(A,1);
 						break;
-					case 3:
+					case 2:
 						respuz(A, 1);
 						solve(A, 0, 0);
-						char c;
+						int c;
 						do {
 							display(A);
-							fflush(stdout);
-							read(STDIN_FILENO, &c, 1);
-						} while (c != 'q' && c != 'Q');
+							c=getin();
+						} while (c != -2);
 						goto mainmenu;
-					case 4:
+					case 3:
 						goto newgame;
-					case 5:
+					case 4:
 						goto mainmenu;
-					case 6:
+					case 5:
 						goto end;
 					}
 				}
@@ -116,34 +108,35 @@ int main(void) {
 			respuz(A, 0);
 			while(1){
 				display(A);
-				printf("\e[8;44f1: Edit\e[9;44f2: Solve\e[10;44f3: Reset\e[11;44f4: Main Menu\e[12;44f5: Exit");
-				fflush(stdout);
-				read(STDIN_FILENO, &q, 1);
-				switch(q - '0'){
-				case 1:
-					respuz(A, 3);
-					display(A);
-					edit(A,0);
-					break;
-				case 2:
-					respuz(A,2);
-					if (!chksolvable(A)||!solve(A, 0, 0)) {
-						respuz(A, 1);
-						respuz(A, 3);
-						display(A);
-						printf("\e[11;44fNo solution exists!");
-						fflush(stdout);
-						usleep(2000000);
+				if (edit(A,0,&x,&y)) {
+					printf("\e[8;44f1: Solve\e[9;44f2: Reset\e[10;44f3: Main Menu\e[11;44f4: Exit");
+					opt=getin();
+					switch(opt){
+					case 1:
+						respuz(A,2);
+						if (!chksolvable(A)||!solve(A, 0, 0)) {
+							respuz(A, 1);
+							respuz(A, 3);
+							display(A);
+							printf("\e[11;44fNo solution exists!");
+							fflush(stdout);
+							usleep(2000000);
+						}
+						else{
+							display(A);
+							opt=getin();
+						}
+						break;
+					case 2:
+						respuz(A, 0);
+						break;
+					case 3:
+						goto mainmenu;
+					case 4:
+						goto end;
 					}
-					break;
-				case 3:
-					respuz(A, 0);
-					break;
-				case 4:
-					goto mainmenu;
-				case 5:
-					goto end;
 				}
+				respuz(A, 3);
 			}
 			break;
 		case 3:
@@ -153,25 +146,27 @@ int main(void) {
 			about();
 			break;
 		}
-	} while (n != '5');
+	} while (n != 5);
 	end:
-	printf("\x1b[?25h");
+	printf("\e[?25h");
 	fflush(stdout);
 	system("clear");
 	tcsetattr(STDIN_FILENO, TCSAFLUSH, &def);
 	return 0;
 }
-int edit(short A[9][9],int chk){
-	printf("\x1b[?25h");//show curser
+int edit(short A[9][9],int chk,int* x,int* y){
+	printf("\e[?25h");//show curser
 	int in,i,j;
 	fflush(stdout);
-	for(i=0;i<9;i++){
-		for(j=0;j<9;){	
+	for(i=*x;i<9;i++){
+		for(j=*y;j<9;){	
 			printf("\e[%d;%df", 3 + 2 * i, 5 + 4 * j);
 			fflush(stdout);
 			in=getin();
 			if (in==-2){
-				printf("\x1b[?25l");
+				*x=i;
+				*y=j;
+				printf("\e[?25l");
 				return 1;
 			}
 			else if(in<10&&in!=-1&&A[i][j]<10){
@@ -214,17 +209,18 @@ int edit(short A[9][9],int chk){
 			}
 			if(chk==1&&chkcomp(A)==1){
 				if(chksolvable(A)){
-					printf("\x1b[?25l");
+					printf("\e[?25l");
 					return 0;
 				}
 			}	
 		}
 	}
 }
-int getin() {
+int getin(void) {
 	char c;
+	fflush(stdout);
 	if (read(STDIN_FILENO, &c, 1) == 1) {
-		if (c == '\x1b') {
+		if (c == '\e') {
 			char seq[3];
 			if (read(STDIN_FILENO, &seq[0], 1) != 1){
 				return -1;
@@ -251,8 +247,10 @@ int getin() {
 		else if(c-'0' >= 0 && c-'0' <=9 ){ 
 			return c-'0';
 		}
+		else {
+			return 0;
+		}
 	}
-	return -1;
 }
 int isallowed(short A[9][9], int m, int  n, int k) {
 	for (int i = 0;i < 9;i++) {
@@ -405,22 +403,21 @@ void help(void) {
 	do {
 		fflush(stdout);
 		system("clear");
-		printf("I'm busy, I can't help right now,\nbut remember, q will save you! try typing q\n");
+		printf("I'm busy, I can't help right now,\nbut remember, q will save you!");
 		fflush(stdout);
-		read(STDIN_FILENO, &c, 1);
-	} while (c != 'q' && c != 'Q');
+	} while (!read(STDIN_FILENO, &c, 1));
 }
 void about(void) {
 	char c;
 	do {
 		fflush(stdout);
 		system("clear");
-		printf("Sudoku v2.6\n\nDeveloped on the behalf of computer science project of sem-I of batch 2020-2024,\nIndian Institute of Information Technology Kalyani\n\n");
+		printf("Sudoku v2.7\n\nDeveloped on the behalf of computer science project of sem-I of batch 2020-2024,\nIndian Institute of Information Technology Kalyani\n\n");
 		printf("Inspired by prof. Bhaskar Biswas\n\n");
 		printf("Credits:\nAli Asad Quasim\nApurba Nath\nDevadi Yekaditya\nHritwik Ghosh\nMislah Rahman\nSoumalya Biswas\nSriramsetty Bhanu Teja\nSuryansh Sisodia\nVemana Joshua Immanuel\nYashraj Singh");
 		fflush(stdout);
 		read(STDIN_FILENO, &c, 1);
-	} while (c != 'q' && c != 'Q');
+	} while (!read(STDIN_FILENO, &c, 1));
 }
 void display(short A[9][9]) {
 	fflush(stdout);
