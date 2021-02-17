@@ -56,16 +56,16 @@ int main(void) {
 			time(&tstart);
 			switch (q) {
 			case 1:
-				genpuz(A, 80);
+				genpuz(A, 70);
 				break;
 			case 2:
-				genpuz(A, 80);
+				genpuz(A, 45);
 				break;
 			case 3:
-				genpuz(A, 80);
+				genpuz(A, 30);
 				break;
 			case 4:
-				genpuz(A, 80);
+				genpuz(A, 22);
 				break;
 			case -2:
 				goto mainmenu;
