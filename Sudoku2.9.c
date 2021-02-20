@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <time.h>
-#include "termios.h"
+#include <termios.h>
 #include <string.h>
 #include <limits.h>
 struct highscore {		// To keep a track of the minimum time the user takes to solve the code
@@ -28,6 +28,7 @@ void help(void);
 void about(void);
 void prinths(int);
 void writehs(int, int);
+
 int main(void) {
 	
 	system("/usr/X11/bin/resize -s 22 87 ");		//To resize the user window for better visual experience
@@ -185,7 +186,7 @@ end:
 	return 0;
 }
 int edit(short A[9][9], int chk, int* x, int* y) {
-	printf("\e[?25h");//show curser
+	printf("\e[?25h");				//show curser
 	int in, i, j;
 	fflush(stdout);
 	for (i = *x;i < 9;i++) {
@@ -523,7 +524,7 @@ void about(void) {
 	fflush(stdout);
 	system("clear");
 	printf("Sudoku v2.9\n\nDeveloped as a computer science project by the students of sem-I of batch 2020-2024,\nIndian Institute of Information Technology Kalyani\n\n");
-	printf("Inspired by Dr. Bhaskar Biswas Innovated by Team Brogrammers\n\n");
+	printf("Inspired by Dr. Bhaskar Biswas, Innovated by Team Brogrammers\n\n");
 	printf("Credits:\nAli Asad Quasim\nApurba Nath\nDevadi Yekaditya\nHritwik Ghosh\nMislah Rahman\nSoumalya Biswas\nSriramsetty Bhanu Teja\nSuryansh Sisodia\nVemana Joshua Immanuel\nYashraj Singh");
 	fflush(stdout);
 	read(STDIN_FILENO, &c, 1);
