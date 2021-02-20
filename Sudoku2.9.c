@@ -1,6 +1,6 @@
 /*Sudoku 2.8
 *Written and compiled on gcc 9.3.0, Ubuntu 20.04
-*Does not run on windows platforms*/
+*Code includes certain functions that would require different libraries on windows platform */
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -8,10 +8,13 @@
 #include <termios.h>
 #include <string.h>
 #include <limits.h>
-struct highscore {
+struct highscore {		// To keep a track of the minimum time the user takes to solve the code
 	int score[5];
 	char name[5][21];
 };
+
+//Declaration of the funcitons used in the code
+
 void display(short[9][9]);
 void genpuz(short[9][9], int);
 void respuz(short[9][9], int);
@@ -25,8 +28,10 @@ void help(void);
 void about(void);
 void prinths(int);
 void writehs(int, int);
+
 int main(void) {
-	system("printf '\033[8;22;87t'"); //First all setting the screen size suitable for our game.
+	
+	system("/usr/X11/bin/resize -s 22 87 ");		//To resize the user window for better visual experience
 	short A[9][9];
 	int n;
 	struct termios def, off;
@@ -34,12 +39,12 @@ int main(void) {
 	off = def;
 	off.c_lflag &= ~(ECHO | ICANON);
 	tcsetattr(STDIN_FILENO, TCSAFLUSH, &off);
-	printf("\e[?25l");//hide curser
+	printf("\e[?25l");		//hiding the curser
 	do {
-	mainmenu:     // Here is the generation of main menu which will appear at the start screen.
+	mainmenu:    		 // Code for generating the main menu which will appear at the home screen.
 		fflush(stdout);
 		system("clear");
-		printf("1: Game\n2: Solver\n3: Help\n4: Highscore\n5: About\n6: Exit");
+		printf("1: Game\n2: Solver\n3: Help\n4: Highscore\n5: About\n6: Exit");		//Home menu options
 		n = getin();
 		int q, opt, x = 0, y = 0;
 		switch (n) {
@@ -49,7 +54,7 @@ int main(void) {
 			do {
 				fflush(stdout);
 				system("clear");
-				printf("New Game\n1: Easy\n2: Medium\n3: Hard\n4: Extreme\nq: Main Menu");
+				printf("New Game\n1: Easy\n2: Medium\n3: Hard\n4: Extreme\nq: Main Menu");		//Putting up the options for the users 
 				q = getin();
 			} while (!(q >= 1 && q <= 4 || q == -2));
 			long tstart, ttaken;
@@ -76,8 +81,8 @@ int main(void) {
 					display(A);
 					time(&ttaken);
 					ttaken -= tstart;
-					printf("\e[8;44fTime taken: %ld mins %ld sec", ttaken / 60, ttaken % 60);
-					printf("\e[9;44f1: Clear Input\e[10;44f2: View Solution\e[11;44f3: New Puzzle\e[12;44f4: Main Menu\e[13;44f5: Quit");
+					printf("\e[8;44fTime taken: %ld mins %ld sec", ttaken / 60, ttaken % 60);			
+					printf("\e[9;44f1: Clear Input\e[10;44f2: View Solution\e[11;44f3: New Puzzle\e[12;44f4: Main Menu\e[13;44f5: Quit");	//Whenever the users presses q we put up the pause menu
 					opt = getin();
 					switch (opt) {
 					case 1:
@@ -107,11 +112,11 @@ int main(void) {
 			time(&ttaken);
 			ttaken -= tstart;
 			display(A);
-			printf("\e[11;44fCongratulations! You won!");
+			printf("\e[11;44fCongratulations! You Solved The Sudoku!");
 			printf("\e[12;44fTime taken: %ld mins %ld sec", ttaken / 60, ttaken % 60);
-			tcsetattr(STDIN_FILENO, TCSAFLUSH, &def); //enable canonoical nd echo
+			tcsetattr(STDIN_FILENO, TCSAFLUSH, &def); 			//enable canonoical nd echo
 			writehs(q, (int)ttaken);
-			tcsetattr(STDIN_FILENO, TCSAFLUSH, &off); //disable
+			tcsetattr(STDIN_FILENO, TCSAFLUSH, &off); 			//disable
 			getin();
 			fflush(stdout);
 			break;
@@ -181,7 +186,7 @@ end:
 	return 0;
 }
 int edit(short A[9][9], int chk, int* x, int* y) {
-	printf("\e[?25h");//show curser
+	printf("\e[?25h");				//show curser
 	int in, i, j;
 	fflush(stdout);
 	for (i = *x;i < 9;i++) {
@@ -299,10 +304,10 @@ int isallowed(short A[9][9], int m, int  n, int k) {
 void genpuz(short A[9][9], int d) {
 	int r[9], z = 0, tmp, i, j, k;
 	srand(time(0));
-	for (i = 0;i < 9;i++) {//fill array r
+	for (i = 0;i < 9;i++) {			//fill array r
 		r[i] = i + 1;
 	}
-	do {//shuffle array r and enter it to diagonal elements
+	do {						//shuffle array r and enter it to diagonal elements
 		for (i = 9;i > 0;i--) {
 			k = rand() % i;
 			tmp = r[i - 1];
@@ -319,7 +324,7 @@ void genpuz(short A[9][9], int d) {
 		z += 3;
 	} while (z != 9);
 	solve(A, 0, 0);
-	for (int i = 0;i < 81 - d;i++) {//remove random
+	for (int i = 0;i < 81 - d;i++) {			//remove random
 		int a = rand() % 9;
 		int b = rand() % 9;
 		if (A[a][b] != 0) {
@@ -334,14 +339,14 @@ void genpuz(short A[9][9], int d) {
 void respuz(short A[9][9], int mode) {
 	int i, j;
 	switch (mode) {
-	case 0://clear
+	case 0:				//clear
 		for (i = 0;i < 9;i++) {
 			for (j = 0;j < 9;j++) {
 				A[i][j] = 0;
 			}
 		}
 		break;
-	case 1://clearusrinput
+	case 1:					//clear user input
 		for (i = 0;i < 9;i++) {
 			for (j = 0;j < 9;j++) {
 				if (A[i][j] < 10) {
@@ -350,7 +355,7 @@ void respuz(short A[9][9], int mode) {
 			}
 		}
 		break;
-	case 2://upgradesys
+	case 2:					//upgrade sys
 		for (i = 0;i < 9;i++) {
 			for (j = 0;j < 9;j++) {
 				if (A[i][j] != 0) {
@@ -359,7 +364,7 @@ void respuz(short A[9][9], int mode) {
 			}
 		}
 		break;
-	case 3://downgradesys
+	case 3:					//downgrade sys
 		for (int i = 0;i < 9;i++) {
 			for (int j = 0;j < 9;j++) {
 				if (A[i][j] > 10) {
@@ -414,7 +419,7 @@ int solve(short A[9][9], int i, int j) {
 	}
 	return 0;
 }
-short chkcomp(short A[9][9]) {//checks if all cells are filled
+short chkcomp(short A[9][9]) {					//checks if all cells are filled
 	for (int i = 0;i < 9;i++) {
 		for (int j = 0;j < 9;j++) {
 			if (A[i][j] == 0) {
@@ -424,7 +429,7 @@ short chkcomp(short A[9][9]) {//checks if all cells are filled
 	}
 	return 1;
 }
-void prinths(int n) {//1 for easy
+void prinths(int n) {						//1 for easy
 	n--;
 	fflush(stdout);
 	system("clear");
@@ -456,7 +461,7 @@ void writehs(int n, int score) {
 	int i;
 	char name[21];
 	FILE* fptr;
-	if ((fptr = fopen("sudoku.bin", "rb")) == NULL) {//if no file
+	if ((fptr = fopen("sudoku.bin", "rb")) == NULL) {			//if no file
 		fptr = fopen("sudoku.bin", "wb");
 		for (i = 0;i < 4;i++) {
 			for (int j = 0;j < 5;j++) {
@@ -481,8 +486,8 @@ void writehs(int n, int score) {
 				printf("\e[13;44f");
 			}
 			printf("Enter your name : ");
-			fgets(name, 21, stdin); //supports space & avoid buffer overflow
-			printf("\e[?25l"); //hidecursor
+			fgets(name, 21, stdin); 				//supports space & avoids buffer overflow
+			printf("\e[?25l"); 						//hides cursor
 			for (i;i < 5;i++) {
 				d[n].score[4] = d[n].score[i];
 				d[n].score[i] = score;
@@ -518,8 +523,8 @@ void about(void) {
 	char c;
 	fflush(stdout);
 	system("clear");
-	printf("Sudoku v2.9\n\nDeveloped on the behalf of computer science project of sem-I of batch 2020-2024,\nIndian Institute of Information Technology Kalyani\n\n");
-	printf("Inspired by Dr. Bhaskar Biswas\n\n");
+	printf("Sudoku v2.9\n\nDeveloped as a computer science project by the students of sem-I of batch 2020-2024,\nIndian Institute of Information Technology Kalyani\n\n");
+	printf("Inspired by Dr. Bhaskar Biswas, Innovated by Team Brogrammers\n\n");
 	printf("Credits:\nAli Asad Quasim\nApurba Nath\nDevadi Yekaditya\nHritwik Ghosh\nMislah Rahman\nSoumalya Biswas\nSriramsetty Bhanu Teja\nSuryansh Sisodia\nVemana Joshua Immanuel\nYashraj Singh");
 	fflush(stdout);
 	read(STDIN_FILENO, &c, 1);
@@ -528,6 +533,9 @@ void display(short A[9][9]) {
 	fflush(stdout);
 	system("clear");
 	//printf("\e[38;5;166m");//add for color
+
+	//Printing the Grid
+
 	printf("\n  ╔═══╤═══╤═══╦═══╤═══╤═══╦═══╤═══╤═══╗\n  ║   │   │   ║   │   │   ║   │   │   ║\n  ╟───┼───┼───╫───┼───┼───╫───┼───┼───╢\n  ║   │   │   ║   │   │   ║   │   │   ║\n  ╟───┼───┼───╫───┼───┼───╫───┼───┼───╢\n  ║   │   │   ║   │   │   ║   │   │   ║\n  ╠═══╪═══╪═══╬═══╪═══╪═══╬═══╪═══╪═══╣\n  ║   │   │   ║   │   │   ║   │   │   ║\n  ╟───┼───┼───╫───┼───┼───╫───┼───┼───╢\n  ║   │   │   ║   │   │   ║   │   │   ║\n  ╟───┼───┼───╫───┼───┼───╫───┼───┼───╢\n  ║   │   │   ║   │   │   ║   │   │   ║\n  ╠═══╪═══╪═══╬═══╪═══╪═══╬═══╪═══╪═══╣\n  ║   │   │   ║   │   │   ║   │   │   ║\n  ╟───┼───┼───╫───┼───┼───╫───┼───┼───╢\n  ║   │   │   ║   │   │   ║   │   │   ║\n  ╟───┼───┼───╫───┼───┼───╫───┼───┼───╢\n  ║   │   │   ║   │   │   ║   │   │   ║\n  ╚═══╧═══╧═══╩═══╧═══╧═══╩═══╧═══╧═══╝\n\n");
 	//printf("\e[m");//add for color
 	for (int i = 0;i < 9;i++) {
