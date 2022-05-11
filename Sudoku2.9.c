@@ -17,17 +17,17 @@ struct highscore {// To keep a track of the minimum time the user takes to solve
 
 void display(short[9][9]);//function for displaying the puzzle grid of sudoku
 void genpuz(short[9][9], int); //this function generates the puzzle for player to play.
-void respuz(short[9][9], int);
-short chkcomp(short[9][9]);
-int chksolvable(short[9][9]);
-int isallowed(short[9][9], int, int, int);
-int solve(short[9][9], int, int);
+void respuz(short[9][9], int);	//this function displays the result of the sudoku problem.
+short chkcomp(short[9][9]);	//function to check that all cells are filled or not.
+int chksolvable(short[9][9]);//function to check the solvability of a grid.	
+int isallowed(short[9][9], int, int, int);//function to check whether an element at a certain position satisfies the sudoku rules or not
+int solve(short[9][9], int, int);	
 int edit(short[9][9], int, int*, int*);
 int getin(void);//this function's job is to get into the sudoku grid and manipulate the grid.
 void help(void);//This function displays the help for user.
-void about(void);//The credits and about of the game
-void prinths(int);
-void writehs(int, int);
+void about(void);//The credits and about of the game.
+void prinths(int);//function to print the highscore.
+void writehs(int, int);//function to update the highscore.
 //Declarations end and the program starts with main() definition.
 int main(void) {
 	
@@ -285,8 +285,8 @@ int getin(void) { //function for getting into the grid, navigating through cells
 		}
 	}
 }
-int isallowed(short A[9][9], int m, int  n, int k) {
-	for (int i = 0;i < 9;i++) {
+int isallowed(short A[9][9], int m, int  n, int k) {		//function to check if a particular value of A[i][j] is allowed at a particular position (x,y) or not
+	for (int i = 0;i < 9;i++) {	//first loop to check for the element in the entire grid
 		if (A[i][n] == k || A[i][n] - 10 == k) {
 			return 0;
 		}
@@ -294,7 +294,7 @@ int isallowed(short A[9][9], int m, int  n, int k) {
 			return 0;
 		}
 	}
-	for (int i = m - m % 3;i < m - m % 3 + 3;i++) {
+	for (int i = m - m % 3;i < m - m % 3 + 3;i++) {	//second loop to check the element in its particular subgrid
 		for (int j = n - n % 3; j < n - n % 3 + 3;j++) {
 			if (A[i][j] == k || A[i][j] - 10 == k) {
 				return 0;
@@ -377,14 +377,14 @@ void respuz(short A[9][9], int mode) {
 		break;
 	}
 }
-int chksolvable(short A[9][9]) {
+int chksolvable(short A[9][9]) {	//function to check the solvability of a grid
 	int a;
 	for (int i = 0;i < 9;i++) {
 		for (int j = 0;j < 9;j++) {
 			if (A[i][j] != 0) {
 				a = A[i][j];
 				A[i][j] = 0;
-				if (!isallowed(A, i, j, a)) {
+				if (!isallowed(A, i, j, a)) {	//checking if a particular value of A[i][j] violates the rules at a particular position (x,y) or not
 					A[i][j] = a;
 					return 0;
 				}
@@ -431,13 +431,13 @@ short chkcomp(short A[9][9]) {					//checks if all cells are filled
 	}
 	return 1;
 }
-void prinths(int n) {						//1 for easy
+void prinths(int n) {						//function to print highscore
 	n--;
 	fflush(stdout);
 	system("clear");
 	struct highscore hs;
 	FILE* fptr;
-	if ((fptr = fopen("sudoku.bin", "r")) == NULL) {
+	if ((fptr = fopen("sudoku.bin", "r")) == NULL) {	//if no file 
 		printf("No records!");
 		return;
 	}
@@ -454,10 +454,10 @@ void prinths(int n) {						//1 for easy
 		if (hs.score[i] == INT_MAX) {
 			return;
 		}
-		printf("%d. %dmin %dsec %s", i + 1, hs.score[i] / 60, hs.score[i] % 60, hs.name[i]);
+		printf("%d. %dmin %dsec %s", i + 1, hs.score[i] / 60, hs.score[i] % 60, hs.name[i]);	//printing highscore
 	}
 }
-void writehs(int n, int score) {
+void writehs(int n, int score) {		//function for updating highscores
 	n--;
 	struct highscore d[4];
 	int i;
