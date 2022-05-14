@@ -16,18 +16,18 @@ struct highscore {// To keep a track of the minimum time the user takes to solve
 //Declaration of the funcitons used in the code
 
 void display(short[9][9]);//function for displaying the puzzle grid of sudoku
-void genpuz(short[9][9], int); //this function generates the puzzle for player to play.
-void respuz(short[9][9], int);	//this function displays the result of the sudoku problem.
-short chkcomp(short[9][9]);	//function to check that all cells are filled or not.
-int chksolvable(short[9][9]);//function to check the solvability of a grid.	
-int isallowed(short[9][9], int, int, int);//function to check whether an element at a certain position satisfies the sudoku rules or not
+void genpuz(short[9][9], int); 			//this function generates the puzzle for player to play.
+void respuz(short[9][9], int);			//this function displays the result of the sudoku problem.
+short chkcomp(short[9][9]);				//function to check that all cells are filled or not.
+int chksolvable(short[9][9]);			//function to check the solvability of a grid.	
+int isallowed(short[9][9], int, int, int);		//function to check whether an element at a certain position satisfies the sudoku rules or not
 int solve(short[9][9], int, int);	
 int edit(short[9][9], int, int*, int*);
-int getin(void);//this function's job is to get into the sudoku grid and manipulate the grid.
-void help(void);//This function displays the help for user.
-void about(void);//The credits and about of the game.
-void prinths(int);//function to print the highscore.
-void writehs(int, int);//function to update the highscore.
+int getin(void);			//this function's job is to get into the sudoku grid and manipulate the grid.
+void help(void);			//This function displays the help for user.
+void about(void);			//The credits and about of the game.
+void prinths(int);				//function to print the highscore.
+void writehs(int, int);			//function to update the highscore.
 //Declarations end and the program starts with main() definition.
 int main(void) {
 	
@@ -437,7 +437,7 @@ void prinths(int n) {						//function to print highscore
 	system("clear");
 	struct highscore hs;
 	FILE* fptr;
-	if ((fptr = fopen("sudoku.bin", "r")) == NULL) {	//if no file 
+	if ((fptr = fopen("sudoku.bin", "r")) == NULL) {	//if no file
 		printf("No records!");
 		return;
 	}
